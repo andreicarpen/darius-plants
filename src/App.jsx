@@ -165,7 +165,7 @@ export default function PlantingCalendar() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
             <Calendar className="w-8 h-8" />
-            Garden Job Calendar
+            Seed Planting Calendar
           </h1>
           
           <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm p-2">
