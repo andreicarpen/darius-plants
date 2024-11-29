@@ -147,52 +147,124 @@ export default function GardenJobCalendar() {
     setSelectedYear(prev => prev + increment);
   };
 
-  const NoteDetailsModal = ({ note, onClose }) => {
-    if (!note) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800">{note.title}</h2>
-              <p className="text-sm text-gray-600 mt-1">{note.date} • {note.year}</p>
-            </div>
-            <button 
-              onClick={onClose}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+  const NoteDetailsModal = ({ note: initialNote, onClose }) => {
+  const [note, setNote] = useState(initialNote);
+  
+  if (!note) return null;
+  
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const updatedNote = {
+          ...note,
+          image: reader.result,
+          emoji: null // Remove emoji when image is added
+        };
+        setNote(updatedNote);
+        setNotes(prevNotes => 
+          prevNotes.map(n => n.id === note.id ? updatedNote : n)
+        );
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    const updatedNote = {
+      ...note,
+      image: '',
+      emoji: getRandomEmoji() // Add a random emoji when image is removed
+    };
+    setNote(updatedNote);
+    setNotes(prevNotes => 
+      prevNotes.map(n => n.id === note.id ? updatedNote : n)
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{note.title}</h2>
+            <p className="text-sm text-gray-600 mt-1">{note.date} • {note.year}</p>
           </div>
-          
-          {note.image && (
-            <div className="mb-6">
+          <button 
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="mb-6">
+          {note.image ? (
+            <div className="relative group">
               <img 
                 src={note.image} 
                 alt={note.title}
                 className="w-full h-64 object-cover rounded-lg"
               />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black bg-opacity-50 rounded-lg">
+                <div className="flex gap-2">
+                  <label className="cursor-pointer px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Change Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <button
+                    onClick={handleRemoveImage}
+                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed border-gray-200 rounded-lg">
+              <div className="text-6xl">
+                {note.emoji}
+              </div>
+              <label className="cursor-pointer px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Add Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
           )}
-          
-          <div className="prose max-w-none mb-8">
-            <p className="text-gray-600 whitespace-pre-wrap">{note.description || "No description provided."}</p>
-          </div>
-  
-          <div className="border-t pt-6">
-            <button
-              onClick={() => handleDeleteNote(note.id)}
-              className="w-full py-2 px-4 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              Delete planting
-            </button>
-          </div>
+        </div>
+        
+        <div className="prose max-w-none mb-8">
+          <p className="text-gray-600 whitespace-pre-wrap">{note.description || "No description provided."}</p>
+        </div>
+
+        <div className="border-t pt-6">
+          <button
+            onClick={() => handleDeleteNote(note.id)}
+            className="w-full py-2 px-4 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+          >
+            <X className="w-4 h-4" />
+            Delete planting
+          </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
