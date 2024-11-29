@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Plus, X, ChevronLeft, ChevronRight, Download, Upload, ExternalLink } from 'lucide-react';
+import { 
+  Calendar, 
+  Plus, 
+  X, 
+  ChevronLeft, 
+  ChevronRight, 
+  Download, 
+  Upload, 
+  ExternalLink,
+  ChevronDown 
+} from 'lucide-react';
 
-export default function PlantingCalendar() {
+export default function GardenJobCalendar() {
+  const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [notes, setNotes] = useState([]);
   const [showAddNote, setShowAddNote] = useState(false);
@@ -15,6 +27,30 @@ export default function PlantingCalendar() {
     date: '',
     year: selectedYear
   });
+
+  // Add this array of emojis
+  const plantEmojis = [
+    '🌱', '🌿', '🌺', '🌸', '🌼', '🌻', '🌹', '🪴', '🌵',
+    '🌴', '🌳', '🌲', '🍀', '🍁', '🍂', '🍃', '🌾', '🌷',
+    '🪷', '🌹', '🥀', '🌺', '🌸', '🌼', '🌻', '🌞', '🌝',
+    '🍄', '🌰', '🥜', '🥕', '🥬', '🥦', '🧄', '🧅', '🌽'
+  ];
+
+  // Add this state to track used emojis
+  const [usedEmojis, setUsedEmojis] = useState(new Set());
+
+  // Add this function to get a random unused emoji
+  const getRandomEmoji = () => {
+    const availableEmojis = plantEmojis.filter(emoji => !usedEmojis.has(emoji));
+    if (availableEmojis.length === 0) {
+      // If all emojis are used, reset the used emojis set
+      setUsedEmojis(new Set());
+      return plantEmojis[Math.floor(Math.random() * plantEmojis.length)];
+    }
+    const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
+    setUsedEmojis(prev => new Set([...prev, randomEmoji]));
+    return randomEmoji;
+  };
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -34,6 +70,7 @@ export default function PlantingCalendar() {
     localStorage.setItem('plantingCalendarData', JSON.stringify(notes));
   }, [notes]);
 
+  // Modify the handleAddNote function to include a random emoji if no image
   const handleAddNote = () => {
     if (newNote.title && selectedPeriod) {
       const noteToAdd = {
@@ -41,7 +78,8 @@ export default function PlantingCalendar() {
         id: Date.now(),
         year: selectedYear,
         date: selectedPeriod,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        emoji: !newNote.image ? getRandomEmoji() : null // Add random emoji if no image
       };
       
       setNotes(prevNotes => [...prevNotes, noteToAdd]);
@@ -156,43 +194,57 @@ export default function PlantingCalendar() {
     );
   }
 
-// ... (keep all the state and functions the same until the return statement) ...
-
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto flex flex-col min-h-[calc(100vh-4rem)]">
-        {/* Header section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
             <Calendar className="w-8 h-8" />
-            Seed Planting Calendar
+            Garden Job Calendar
           </h1>
           
-          <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm p-2">
-            <button 
-              onClick={() => changeYear(-1)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-xl font-semibold min-w-[100px] text-center">
-              {selectedYear}
-            </span>
-            <button 
-              onClick={() => changeYear(1)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <select
+                value={selectedMonth || ''}
+                onChange={(e) => setSelectedMonth(e.target.value || null)}
+                className="appearance-none bg-white rounded-lg shadow-sm px-4 py-2 pr-10 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 h-[44px] text-base font-medium"
+              >
+                <option value="">All Months</option>
+                {months.map(month => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+            </div>
+            
+            <div className="flex items-center gap-4 bg-white rounded-lg shadow-sm p-2">
+              <button 
+                onClick={() => changeYear(-1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-xl font-semibold min-w-[100px] text-center">
+                {selectedYear}
+              </span>
+              <button 
+                onClick={() => changeYear(1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
-          {months.map(month => (
+        <div className="space-y-6 flex-grow">
+          {months
+            .filter(month => selectedMonth === null || month === selectedMonth)
+            .map(month => (
             <div key={month} className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">{month}</h2>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {periods.map(period => {
                   const periodNotes = notes.filter(note => 
                     note.date === `${period} of ${month}` && note.year === selectedYear
@@ -204,16 +256,26 @@ export default function PlantingCalendar() {
                       className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
                     >
                       <h3 className="font-medium text-gray-700 mb-2">{period}</h3>
-                      <div className="space-y-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {periodNotes.map(note => (
                           <button
                             key={note.id}
                             onClick={() => openNoteDetails(note)}
-                            className="w-full text-left bg-gray-50 rounded p-3 hover:bg-gray-100 transition-colors group"
+                            className="aspect-square relative group"
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{note.title}</span>
-                              <ExternalLink className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {note.image ? (
+                              <img 
+                                src={note.image} 
+                                alt={note.title}
+                                className="w-full h-full object-cover rounded-lg group-hover:opacity-90 transition-opacity"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center text-4xl">
+                                {note.emoji}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="w-5 h-5 text-white drop-shadow-lg" />
                             </div>
                           </button>
                         ))}
@@ -222,9 +284,9 @@ export default function PlantingCalendar() {
                             setSelectedPeriod(`${period} of ${month}`);
                             setShowAddNote(true);
                           }}
-                          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                          className="aspect-square rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-500 transition-colors flex items-center justify-center"
                         >
-                          <Plus className="w-4 h-4" /> Add planting
+                          <Plus className="w-6 h-6 text-gray-400 hover:text-blue-500 transition-colors" />
                         </button>
                       </div>
                     </div>
@@ -235,28 +297,38 @@ export default function PlantingCalendar() {
           ))}
         </div>
 
-        {/* Footer with Export/Import */}
         <div className="mt-8 pt-6 border-t">
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={exportData}
-              className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Download className="w-4 h-4" /> Export Calendar
-            </button>
-            <label className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
-              <Upload className="w-4 h-4" /> Import Calendar
-              <input
-                type="file"
-                accept=".json"
-                onChange={importData}
-                className="hidden"
-              />
-            </label>
+          <div className="flex flex-row justify-between items-center">
+            <div>
+              <a 
+                href="https://andreicarpen.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Made with ❤️ by Andrei
+              </a>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-4">
+              <button
+                onClick={exportData}
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors w-full sm:w-auto"
+              >
+                <Download className="w-4 h-4" /> Export Calendar
+              </button>
+              <label className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer w-full sm:w-auto">
+                <Upload className="w-4 h-4" /> Import Calendar
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importData}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
         </div>
 
-        {/* Add Note Modal */}
         {showAddNote && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -300,7 +372,6 @@ export default function PlantingCalendar() {
           </div>
         )}
 
-        {/* Note Details Modal */}
         {showNoteDetails && (
           <NoteDetailsModal
             note={selectedNote}
